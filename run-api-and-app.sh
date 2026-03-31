@@ -7,20 +7,51 @@ FRONTEND_PORT="${FRONTEND_PORT:-4200}"
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 check_running_port() {
-  lsof -t -i:"$PORT" 2>/dev/null || true
+  lsof -t -sTCP:LISTEN -i:"$PORT" 2>/dev/null || true
 }
 
 check_frontend_port() {
-  lsof -t -i:"$FRONTEND_PORT" 2>/dev/null || true
+  lsof -t -sTCP:LISTEN -i:"$FRONTEND_PORT" 2>/dev/null || true
+}
+
+list_child_pids() {
+  local pid="$1"
+  pgrep -P "$pid" 2>/dev/null || true
+}
+
+kill_process_tree() {
+  local pid="$1"
+  local signal="${2:-TERM}"
+  local child_pid
+
+  while IFS= read -r child_pid; do
+    [ -n "$child_pid" ] || continue
+    kill_process_tree "$child_pid" "$signal"
+  done <<< "$(list_child_pids "$pid")"
+
+  kill "-${signal}" "$pid" 2>/dev/null || true
 }
 
 stop_pid() {
-  local pid="$1"
+  local pid_list="$1"
   local name="$2"
+  local pid
 
-  if [ -n "$pid" ]; then
-    kill "$pid" || true
-    echo "Stopped ${name} PID ${pid}."
+  if [ -n "$pid_list" ]; then
+    while IFS= read -r pid; do
+      [ -n "$pid" ] || continue
+      kill_process_tree "$pid" TERM
+    done <<< "$pid_list"
+
+    sleep 1
+
+    while IFS= read -r pid; do
+      [ -n "$pid" ] || continue
+      if kill -0 "$pid" 2>/dev/null; then
+        kill_process_tree "$pid" KILL
+      fi
+      echo "Stopped ${name} PID ${pid}."
+    done <<< "$pid_list"
   else
     echo "${name} is not running."
   fi
@@ -57,8 +88,7 @@ if [ -n "$port_pid" ]; then
 
   case "$answer" in
   "" | y | Y | yes | YES)
-    kill "$port_pid" || true
-    echo "Stopped PID ${port_pid}."
+    stop_pid "$port_pid" "API"
     ;;
   *)
     echo "Keeping PID ${port_pid} running."
