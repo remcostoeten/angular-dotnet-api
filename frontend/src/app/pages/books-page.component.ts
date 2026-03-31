@@ -134,6 +134,8 @@ import { PageLayoutComponent } from '../layout/page-layout.component';
               <div class="rounded-md border border-neutral-800 bg-neutral-900 p-6">
                 @if (booksApi.selectedBook.isLoading()) {
                   <p class="text-sm text-neutral-500">Loading book...</p>
+                } @else if (booksApi.selectedBook.error()) {
+                  <p class="text-sm text-red-400">Failed to load the selected book.</p>
                 } @else if (booksApi.selectedBook.hasValue()) {
                   <article class="space-y-6">
                     <div class="flex items-start justify-between gap-4">
@@ -204,7 +206,7 @@ export class BooksPageComponent {
     this.bitcoinPrice.ensureFresh();
 
     effect(() => {
-      const books = this.filteredBooks();
+      const books = this.books();
 
       if (books.length === 0) {
         this.selectedBookId.set(null);
@@ -212,9 +214,9 @@ export class BooksPageComponent {
       }
 
       const selectedBookId = this.selectedBookId();
-      const selectedStillVisible = selectedBookId !== null && books.some((book) => book.id === selectedBookId);
+      const selectedStillExists = selectedBookId !== null && books.some((book) => book.id === selectedBookId);
 
-      if (!selectedStillVisible) {
+      if (!selectedStillExists) {
         this.booksApi.selectBook(books[0].id);
       }
     });
