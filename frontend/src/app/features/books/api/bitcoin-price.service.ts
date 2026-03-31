@@ -43,6 +43,7 @@ export class BitcoinPriceService {
   ensureFresh(): void {
     const status = this.eurPerBitcoin.status();
 
+    // provided by httpResource
     if (status === 'idle' || status === 'loading' || status === 'reloading') {
       return;
     }
