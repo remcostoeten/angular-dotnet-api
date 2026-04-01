@@ -8,7 +8,7 @@ import type { IBookDto, ICreateBookPayload } from '../features/books/api/books.m
 import { AddBookFormComponent } from '../features/books/components/add-book-form.component';
 import { BookPriceLabelComponent } from '../features/books/components/book-price-label.component';
 import { PriceDisplayToggleComponent } from '../features/books/components/price-display-toggle.component';
-import { PageLayoutComponent } from '../layout/page-layout.component';
+import { PageLayoutComponent } from '../components/page-layout.component';
 
 @Component({
   selector: 'app-books-page',

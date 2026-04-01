@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { PageLayoutComponent } from '../layout/page-layout.component';
+import { PageLayoutComponent } from '../components/page-layout.component';
 
 interface IReviewPullRequest {
   readonly number: number;
