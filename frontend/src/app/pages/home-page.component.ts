@@ -190,7 +190,7 @@ const REVIEW_PULL_REQUESTS: readonly IReviewPullRequest[] = [
                   </ul>
                 </details>
 
-                <details class="rounded-md border border-neutral-800 bg-neutral-950 px-4 py-3">
+                <details class="rounded-md border border-neutral-800 bg-neutral-950 px-4 py-3" open>
                   <summary class="cursor-pointer text-sm font-medium text-white">
                     Files ({{ pullRequest.files.length }})
                   </summary>
@@ -213,21 +213,13 @@ const REVIEW_PULL_REQUESTS: readonly IReviewPullRequest[] = [
             <p class="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">Reviewer notes</p>
             <h2 class="mt-3 text-xl font-semibold text-white">Incremental walkthrough</h2>
             <p class="mt-3 text-sm leading-6 text-neutral-400">
-              Start with the scaffold PR and work downward. Each entry links to the GitHub pull request and expands to show the commit headlines and changed files that landed in that step.
-            </p>
-          </div>
-
-          <div class="rounded-md border border-neutral-800 bg-neutral-900 p-6">
-            <p class="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">Feature link</p>
-            <h2 class="mt-3 text-xl font-semibold text-white">Books experience</h2>
-            <p class="mt-3 text-sm leading-6 text-neutral-400">
-              The latest merged work is centered on the books page: create flow, list/detail view, currency display toggle, and search behavior.
+              Review the merged PRs below. Open the feature directly if you want to skip to the final result.
             </p>
             <a
               routerLink="/books"
               class="mt-4 inline-flex items-center justify-center rounded-md bg-white px-4 py-3 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
             >
-              Open books page
+              Open feature
             </a>
           </div>
         </aside>

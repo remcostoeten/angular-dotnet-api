@@ -11,7 +11,24 @@ check_running_port() {
 }
 
 check_frontend_port() {
-  lsof -t -sTCP:LISTEN -i:"$FRONTEND_PORT" 2>/dev/null || true
+  # lsof -sTCP:LISTEN may not detect all listeners (e.g. ng serve/vite),
+  # so fall back to ss if lsof finds nothing.
+  local pids
+  pids=$(lsof -t -sTCP:LISTEN -i:"$FRONTEND_PORT" 2>/dev/null || true)
+  if [ -n "$pids" ]; then
+    echo "$pids"
+    return
+  fi
+  # ss-based fallback: extract PID from ss output
+  ss -tlnp "sport = :${FRONTEND_PORT}" 2>/dev/null \
+    | grep -oP 'pid=\K[0-9]+' | sort -u || true
+}
+
+find_frontend_pids() {
+  local port_pids ng_pids
+  port_pids=$(check_frontend_port)
+  ng_pids=$(pgrep -f "ng serve" 2>/dev/null || true)
+  echo -e "${port_pids}\n${ng_pids}" | sort -u | grep -v '^$' || true
 }
 
 list_child_pids() {
@@ -66,15 +83,36 @@ run_api() {
 
 run_frontend() {
   cd "$ROOT_DIR/frontend"
-  nohup npm start >/dev/null 2>&1 &
+
+  # Stop any existing frontend processes first
+  local existing_pids
+  existing_pids=$(find_frontend_pids)
+  if [ -n "$existing_pids" ]; then
+    stop_pid "$existing_pids" "Existing frontend"
+  fi
+
+  nohup npm start > "$ROOT_DIR/frontend.log" 2>&1 &
   local frontend_pid=$!
-  echo "Frontend started in background on http://localhost:${FRONTEND_PORT} (PID ${frontend_pid})."
+
+  echo "Waiting for frontend on port ${FRONTEND_PORT}..."
+  local attempts=0
+  while [ $attempts -lt 60 ]; do
+    if [ -n "$(check_frontend_port)" ]; then
+      echo "Frontend started in background on http://localhost:${FRONTEND_PORT}."
+      return 0
+    fi
+    sleep 1
+    attempts=$((attempts + 1))
+  done
+
+  echo "Frontend did not start within 60s. Check $ROOT_DIR/frontend.log for errors."
+  return 1
 }
 
 case "${1:-}" in
 exit)
   stop_pid "$(check_running_port)" "API"
-  stop_pid "$(check_frontend_port)" "Frontend"
+  stop_pid "$(find_frontend_pids)" "Frontend"
   echo "bye."
   exit 0
   ;;

@@ -5,6 +5,10 @@ import { form, FormField, required, validate } from '@angular/forms/signals';
 import { BitcoinPriceService } from '../api/bitcoin-price.service';
 import type { ICreateBookPayload } from '../api/books.models';
 
+// in large app I would extract the form to a seperate shared ui component and maybe even a createForm helper to standardize creation, validation and resetting.
+
+// this pattern is something I would do with most components throughouth the app. Ideally there is as little tailwind/css in a view as possible
+
 @Component({
   selector: 'app-add-book-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -186,8 +190,8 @@ import type { ICreateBookPayload } from '../api/books.models';
         >
           @if (isSubmitting()) {
             Adding book...
-          // kinda pointless as we post to memory which is near instant but showcases whats possible
-            } @else {
+            // kinda useless as we post to memory so will be instant but showcasing what
+          } @else {
             Add book
           }
         </button>
@@ -195,7 +199,6 @@ import type { ICreateBookPayload } from '../api/books.models';
     </form>
   `
 })
-
 export class AddBookFormComponent {
   readonly isSubmitting = input(false);
   readonly submitBook = output<ICreateBookPayload>();
@@ -230,6 +233,9 @@ export class AddBookFormComponent {
     required(s.title, { message: 'Title is required' });
     required(s.authorName, { message: 'Author is required' });
     required(s.price, { message: 'Price is required' });
+
+    // inline u can't do > 0 so this was the solution or 0,0000001 but that also feels hacky
+    // personally I am used to doing validation through Zod. 
     validate(s.price, ({ value }) => {
       if (value() <= 0) {
         return {
@@ -267,6 +273,8 @@ export class AddBookFormComponent {
     this.lastEditedPriceField.set('eur');
     this.eurPriceInput.set(rawValue);
   }
+
+  // This and the Blur  below could be a generic helper that prevents having to rewrite it almost identically in multiple places but for now this is fine.
 
   onBtcPriceBlur(rawValue: string): void {
     const btcPrice = Number(rawValue);
