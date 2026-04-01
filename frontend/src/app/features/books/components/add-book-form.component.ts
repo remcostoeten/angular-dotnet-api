@@ -101,6 +101,7 @@ import type { ICreateBookPayload } from '../api/books.models';
                   [disabled]="isSubmitting() || !canConvertPrice()"
                   (input)="onEurPriceInput(priceEurField.value)"
                   (blur)="onEurPriceBlur(priceEurField.value)"
+                  (mouseleave)="onEurPriceBlur(priceEurField.value)"
                   class="w-full border-0 bg-transparent py-3 text-sm text-white outline-none placeholder:text-neutral-500 disabled:cursor-not-allowed"
                   placeholder="EUR equivalent"
                 />
@@ -119,6 +120,7 @@ import type { ICreateBookPayload } from '../api/books.models';
                   [disabled]="isSubmitting()"
                   (input)="onBtcPriceInput(priceBtcField.value)"
                   (blur)="onBtcPriceBlur(priceBtcField.value)"
+                  (mouseleave)="onBtcPriceBlur(priceBtcField.value)"
                   class="w-full border-0 bg-transparent py-3 text-sm text-white outline-none placeholder:text-neutral-500"
                   placeholder="0.001"
                 />
@@ -139,6 +141,7 @@ import type { ICreateBookPayload } from '../api/books.models';
                   [disabled]="isSubmitting()"
                   (input)="onBtcPriceInput(priceBtcField.value)"
                   (blur)="onBtcPriceBlur(priceBtcField.value)"
+                  (mouseleave)="onBtcPriceBlur(priceBtcField.value)"
                   class="w-full border-0 bg-transparent py-3 text-sm text-white outline-none placeholder:text-neutral-500"
                   placeholder="0.001"
                 />
@@ -157,6 +160,7 @@ import type { ICreateBookPayload } from '../api/books.models';
                   [disabled]="isSubmitting() || !canConvertPrice()"
                   (input)="onEurPriceInput(priceEurField.value)"
                   (blur)="onEurPriceBlur(priceEurField.value)"
+                  (mouseleave)="onEurPriceBlur(priceEurField.value)"
                   class="w-full border-0 bg-transparent py-3 text-sm text-white outline-none placeholder:text-neutral-500 disabled:cursor-not-allowed"
                   placeholder="EUR equivalent"
                 />
