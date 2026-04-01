@@ -83,7 +83,7 @@ import type { ICreateBookPayload } from '../api/books.models';
           @if (currentEurPerBitcoin() !== null) {
             <p class="text-sm text-neutral-400">Current EUR/BTC: €{{ currentEurPerBitcoin() | number: '1.2-2' }}</p>
           } @else {
-            <p class="text-sm text-amber-300">EUR conversion unavailable.</p>
+            <p class="text-sm text-amber-300">EUR conversion unavailable. Rate limited most likely,I</p>
           }
         </div>
 

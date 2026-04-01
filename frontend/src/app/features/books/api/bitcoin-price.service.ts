@@ -1,5 +1,5 @@
 import { httpResource } from '@angular/common/http';
-import { effect, inject, Injectable } from '@angular/core';
+import { effect, inject, Injectable, signal } from '@angular/core';
 
 import { API_CONFIG } from '../../../core/config/api.config';
 
@@ -18,7 +18,7 @@ function parseBitcoinPriceResponse(response: IResponse): number {
 @Injectable({ providedIn: 'root' })
 export class BitcoinPriceService {
   private readonly apiConfig = inject(API_CONFIG);
-  private lastLoadedAt: number | null = null;
+  private readonly lastLoadedAt = signal<number | null>(null);
 
   readonly eurPerBitcoin = httpResource<number>(
     () => ({
@@ -35,9 +35,11 @@ export class BitcoinPriceService {
 
   private readonly trackResolvedPrice = effect(() => {
     if (this.eurPerBitcoin.status() === 'resolved') {
-      this.lastLoadedAt = Date.now();
+      this.lastLoadedAt.set(Date.now());
     }
   });
+
+  readonly cacheTtlMs = BITCOIN_PRICE_CACHE_TTL_MS;
 
   // this is called on each post to  get a fresh price which is sufficient for  rate limiting
   ensureFresh(): void {
@@ -48,10 +50,32 @@ export class BitcoinPriceService {
       return;
     }
 
-    if (this.lastLoadedAt !== null && Date.now() - this.lastLoadedAt < BITCOIN_PRICE_CACHE_TTL_MS) {
+    const lastLoadedAt = this.lastLoadedAt();
+
+    if (lastLoadedAt !== null && Date.now() - lastLoadedAt < BITCOIN_PRICE_CACHE_TTL_MS) {
       return;
     }
 
     this.eurPerBitcoin.reload();
+  }
+
+  forceRefresh(): void {
+    const status = this.eurPerBitcoin.status();
+
+    if (status === 'loading' || status === 'reloading') {
+      return;
+    }
+
+    this.eurPerBitcoin.reload();
+  }
+
+  getRemainingCacheMs(now = Date.now()): number {
+    const lastLoadedAt = this.lastLoadedAt();
+
+    if (lastLoadedAt === null) {
+      return 0;
+    }
+
+    return Math.max(0, BITCOIN_PRICE_CACHE_TTL_MS - (now - lastLoadedAt));
   }
 }

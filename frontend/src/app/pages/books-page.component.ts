@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { BitcoinPriceService } from '../features/books/api/bitcoin-price.service';
@@ -54,11 +54,26 @@ import { PageLayoutComponent } from '../components/page-layout.component';
               }
               @if (hasLiveConversion()) {
                 <p class="text-xs text-neutral-500">Current EUR/BTC: €{{ bitcoinPrice.eurPerBitcoin.value() | number: '1.2-2' }}</p>
+                <p class="text-xs text-neutral-500">
+                  @if (secondsUntilAutomaticRefresh() > 0) {
+                    Cache refresh on post in {{ secondsUntilAutomaticRefresh() }}s
+                  } @else {
+                    Cache can refresh on the next post
+                  }
+                </p>
               }
             </div>
             <div class="flex flex-col gap-3 md:items-end">
               <div class="flex items-center gap-4">
                 <app-price-display-toggle />
+                <button
+                  type="button"
+                  class="rounded-md border border-neutral-700 px-3 py-2 text-xs font-medium text-white transition-colors hover:border-neutral-500 hover:bg-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
+                  [disabled]="isRefreshingConversion()"
+                  (click)="onRefreshBitcoinPrice()"
+                >
+                  {{ isRefreshingConversion() ? 'Refreshing...' : 'Refresh rate' }}
+                </button>
                 @if (!hasLiveConversion()) {
                   <p class="text-xs text-amber-300">EUR unavailable</p>
                 }
@@ -178,8 +193,10 @@ export class BooksPageComponent {
   protected readonly isCreating = signal(false);
   protected readonly booksApi = inject(BooksApiService);
   protected readonly bitcoinPrice = inject(BitcoinPriceService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly addBookForm = viewChild(AddBookFormComponent);
   protected readonly searchTerm = signal('');
+  private readonly now = signal(Date.now());
   protected readonly selectedBookId = this.booksApi.selectedBookId;
 
   protected readonly books = computed<readonly IBookDto[]>(() => this.booksApi.books.hasValue() ? this.booksApi.books.value() : []);
@@ -200,10 +217,21 @@ export class BooksPageComponent {
   protected readonly bookCount = computed(() => this.books().length);
   protected readonly visibleBookCount = computed(() => this.filteredBooks().length);
   protected readonly hasLiveConversion = computed(() => this.bitcoinPrice.eurPerBitcoin.hasValue());
+  protected readonly isRefreshingConversion = computed(() => {
+    const status = this.bitcoinPrice.eurPerBitcoin.status();
+
+    return status === 'loading' || status === 'reloading';
+  });
+  protected readonly secondsUntilAutomaticRefresh = computed(() =>
+    Math.ceil(this.bitcoinPrice.getRemainingCacheMs(this.now()) / 1_000)
+  );
   protected readonly createError = signal<string | null>(null);
 
   constructor() {
     this.bitcoinPrice.ensureFresh();
+    const timer = window.setInterval(() => this.now.set(Date.now()), 1_000);
+
+    this.destroyRef.onDestroy(() => window.clearInterval(timer));
 
     effect(() => {
       const books = this.books();
@@ -227,9 +255,9 @@ export class BooksPageComponent {
     this.isCreating.set(true);
 
     try {
+      this.bitcoinPrice.ensureFresh();
       await firstValueFrom(this.booksApi.addBook(payload));
       this.addBookForm()?.reset();
-      this.bitcoinPrice.eurPerBitcoin.reload();
       this.booksApi.books.reload();
       this.isCreating.set(false);
     } catch {
@@ -240,5 +268,9 @@ export class BooksPageComponent {
 
   onSelectBook(id: string): void {
     this.booksApi.selectBook(id);
+  }
+
+  onRefreshBitcoinPrice(): void {
+    this.bitcoinPrice.forceRefresh();
   }
 }
