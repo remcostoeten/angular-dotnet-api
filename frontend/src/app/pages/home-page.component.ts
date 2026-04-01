@@ -13,7 +13,25 @@ interface IReviewPullRequest {
   readonly files: readonly string[];
 }
 
+interface IRecentCommit {
+  readonly shortSha: string;
+  readonly title: string;
+  readonly committedAt: string;
+}
+
 const REVIEW_PULL_REQUESTS: readonly IReviewPullRequest[] = [
+  {
+    number: 7,
+    title: 'feat: add homepage PR review index',
+    url: 'https://github.com/remcostoeten/angular-dotnet-api/pull/7',
+    mergedAt: '2026-03-31T23:40:55Z',
+    commitTitles: [
+      'feat: add homepage PR review index'
+    ],
+    files: [
+      'frontend/src/app/pages/home-page.component.ts'
+    ]
+  },
   {
     number: 6,
     title: 'fix: handle books page selection and detail errors',
@@ -143,6 +161,24 @@ const REVIEW_PULL_REQUESTS: readonly IReviewPullRequest[] = [
   }
 ];
 
+const RECENT_COMMITS: readonly IRecentCommit[] = [
+  {
+    shortSha: 'a5c8ed0',
+    title: 'Make the btc/eur live conversion also work for mouse users instead of kbd tabs',
+    committedAt: '2026-04-01T09:13:03+02:00'
+  },
+  {
+    shortSha: '2378d1c',
+    title: 'cleanup: move component to more logical place',
+    committedAt: '2026-04-01T09:05:33+02:00'
+  },
+  {
+    shortSha: 'd45541e',
+    title: 'docs: add project documentation, assessment checklist, and improve frontend startup script reliability',
+    committedAt: '2026-04-01T09:00:46+02:00'
+  }
+];
+
 @Component({
   selector: 'app-home',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -153,8 +189,29 @@ const REVIEW_PULL_REQUESTS: readonly IReviewPullRequest[] = [
       subheading="Angular + .NET"
       description="Merged pull requests, commit messages, and changed files collected in one place so the assessment can be reviewed incrementally."
     >
-      <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+     
         <section class="space-y-4">
+          <article class="rounded-md border border-neutral-800 bg-neutral-900 p-6">
+            <div class="border-b border-neutral-800 pb-4">
+              <p class="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">Recent commits</p>
+              <h2 class="mt-2 text-xl font-semibold text-white">Direct commits after the latest PR</h2>
+            </div>
+
+            <ul class="mt-4 space-y-3">
+              @for (commit of recentCommits; track commit.shortSha) {
+                <li class="rounded-md border border-neutral-800 bg-neutral-950 px-4 py-3">
+                  <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="min-w-0">
+                      <p class="font-mono text-xs text-neutral-500">{{ commit.shortSha }}</p>
+                      <p class="mt-2 text-sm font-medium text-white">{{ commit.title }}</p>
+                    </div>
+                    <p class="shrink-0 text-xs text-neutral-400">{{ commit.committedAt | date: 'medium' }}</p>
+                  </div>
+                </li>
+              }
+            </ul>
+          </article>
+
           @for (pullRequest of pullRequests; track pullRequest.number) {
             <article class="rounded-md border border-neutral-800 bg-neutral-900 p-6">
               <div class="flex flex-col gap-4 border-b border-neutral-800 pb-4 md:flex-row md:items-start md:justify-between">
@@ -171,7 +228,7 @@ const REVIEW_PULL_REQUESTS: readonly IReviewPullRequest[] = [
                   rel="noopener noreferrer"
                   class="inline-flex items-center justify-center rounded-md border border-neutral-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-neutral-500 hover:bg-neutral-800"
                 >
-                  Open PR
+                  Open PR on GitHub
                 </a>
               </div>
 
@@ -206,27 +263,14 @@ const REVIEW_PULL_REQUESTS: readonly IReviewPullRequest[] = [
               </div>
             </article>
           }
+
         </section>
 
-        <aside class="space-y-4 xl:sticky xl:top-28">
-          <div class="rounded-md border border-neutral-800 bg-neutral-900 p-6">
-            <p class="text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">Reviewer notes</p>
-            <h2 class="mt-3 text-xl font-semibold text-white">Incremental walkthrough</h2>
-            <p class="mt-3 text-sm leading-6 text-neutral-400">
-              Review the merged PRs below. Open the feature directly if you want to skip to the final result.
-            </p>
-            <a
-              routerLink="/books"
-              class="mt-4 inline-flex items-center justify-center rounded-md bg-white px-4 py-3 text-sm font-medium text-black transition-colors hover:bg-neutral-200"
-            >
-              Open feature
-            </a>
-          </div>
-        </aside>
-      </div>
+     
     </app-page-layout>
   `
 })
 export class HomeComponent {
   protected readonly pullRequests = REVIEW_PULL_REQUESTS;
+  protected readonly recentCommits = RECENT_COMMITS;
 }
